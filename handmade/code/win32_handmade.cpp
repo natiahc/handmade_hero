@@ -22,10 +22,9 @@ struct win32_offscreen_buffer
 	int Width;
 	int Height;
 	int Pitch;
-	int BytesPerPixel;
 };
 
-global_variable bool Running;
+global_variable bool GlobalRunning;
 global_variable win32_offscreen_buffer GlobalBackbuffer;
 
 struct win32_window_dimension
@@ -79,7 +78,7 @@ internal void Win32ResizeDIBSection(win32_offscreen_buffer *Buffer, int Width, i
 
 	Buffer->Width = Width;
 	Buffer->Height = Height;
-	Buffer->BytesPerPixel = 4;
+	int BytesPerPixel = 4;
 
 	Buffer->Info.bmiHeader.biSize = sizeof(Buffer->Info.bmiHeader);
 	Buffer->Info.bmiHeader.biWidth = Buffer->Width;
@@ -88,10 +87,10 @@ internal void Win32ResizeDIBSection(win32_offscreen_buffer *Buffer, int Width, i
 	Buffer->Info.bmiHeader.biBitCount = 32;
 	Buffer->Info.bmiHeader.biCompression = BI_RGB;
 
-	int BitmapMemorySize = (Buffer->Width * Buffer->Height) * Buffer->BytesPerPixel;
+	int BitmapMemorySize = (Buffer->Width * Buffer->Height) * BytesPerPixel;
 	Buffer->Memory = VirtualAlloc(0, BitmapMemorySize, MEM_COMMIT, PAGE_READWRITE);
 
-	Buffer->Pitch = Width*Buffer->BytesPerPixel;
+	Buffer->Pitch = Width*BytesPerPixel;
 }
 
 internal void Win32DisplayBufferInWindow(HDC DeviceContext, int WindowWidth, int WindowHeight, 
@@ -127,7 +126,7 @@ LRESULT CALLBACK Win32MainWindowCallback(
 
 		case WM_DESTROY:
 		{
-			Running = false;
+			GlobalRunning = false;
 			// DestroyWindow(Window);
 			// PostQuitMessage(0);
 			OutputDebugStringA("WM_DESTROY\n");
@@ -135,7 +134,7 @@ LRESULT CALLBACK Win32MainWindowCallback(
 
 		case WM_CLOSE:
 		{
-			Running = false;
+			GlobalRunning = false;
 			// PostQuitMessage(0);
 			OutputDebugStringA("WM_CLOSE\n");
 		} break;
@@ -207,15 +206,15 @@ WinMain(HINSTANCE Instance,
 			int XOffset = 0;
 			int YOffset = 0;
 
-			Running = true;
-			while(Running)
+			GlobalRunning = true;
+			while(GlobalRunning)
 			{
 				MSG Message;
 				while(PeekMessage(&Message, 0, 0, 0, PM_REMOVE))
 				{
 					if(Message.message == WM_QUIT)
 					{
-						Running = false;
+						GlobalRunning = false;
 					}
 
 					TranslateMessage(&Message);
